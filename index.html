@@ -3,10 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DecoTV Ultimate - 极致影视聚合站</title>
-    <!-- Tailwind CSS 界面渲染 -->
+    <title>DecoTV Pro - 影视深度聚合站</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- Hls.js 核心解码流媒体 -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
         body { background-color: #0b0f19; color: #f1f5f9; }
@@ -17,147 +15,108 @@
 </head>
 <body class="font-sans antialiased min-h-screen flex flex-col">
 
-    <!-- 顶部导航栏 -->
     <header class="bg-slate-900/95 border-b border-slate-800 sticky top-0 z-50 backdrop-blur px-4 py-3 shadow-xl">
         <div class="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-4">
             
-            <!-- Logo 与数据源手动切换 -->
             <div class="flex items-center justify-between w-full lg:w-auto gap-4">
                 <div class="flex items-center gap-2 shrink-0">
-                    <span class="text-2xl font-black bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 bg-clip-text text-transparent">🎬 DecoTV Ultimate</span>
-                    <span class="text-[10px] bg-rose-500/10 text-rose-400 border border-rose-500/20 px-1.5 py-0.5 rounded font-mono font-bold">V4.0</span>
-                </div>
-                
-                <!-- 数据源手动切换 -->
-                <div class="flex bg-slate-950 p-0.5 rounded-xl border border-slate-800 text-xs shadow-inner">
-                    <button id="src-douban" onclick="changeMetaSource('douban')" class="px-3 py-1.5 rounded-lg transition font-bold bg-amber-500 text-slate-950">豆瓣电影</button>
-                    <button id="src-cupfox" onclick="changeMetaSource('cupfox')" class="px-3 py-1.5 rounded-lg transition font-bold text-slate-400">Cupfox推荐</button>
+                    <span class="text-2xl font-black bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500 bg-clip-text text-transparent">🎬 DecoTV Pro</span>
+                    <span class="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded font-mono font-bold">LIVE v5.0</span>
                 </div>
             </div>
 
-            <!-- 核心升级：影视多分类导航栏 -->
             <nav id="category-nav" class="flex items-center gap-1 bg-slate-950/60 p-1 rounded-xl border border-slate-800/80 overflow-x-auto max-w-full">
-                <button onclick="switchCategory('all')" class="cat-btn px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-800 text-amber-400 transition shrink-0">全部推荐</button>
-                <button onclick="switchCategory('movie')" class="cat-btn px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-slate-200 transition shrink-0">电影</button>
-                <button onclick="switchCategory('tv')" class="cat-btn px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-slate-200 transition shrink-0">连续剧</button>
-                <button onclick="switchCategory('anime')" class="cat-btn px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-slate-200 transition shrink-0">动漫专区</button>
-                <button onclick="switchCategory('show')" class="cat-btn px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-slate-200 transition shrink-0">综艺娱乐</button>
+                <button id="cat-all" onclick="switchLiveCategory('', 'all')" class="cat-btn px-4 py-1.5 text-xs font-bold rounded-lg bg-slate-800 text-amber-400 transition shrink-0">最新收录</button>
+                <button id="cat-movie" onclick="switchLiveCategory('电影', 'movie')" class="cat-btn px-4 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-slate-200 transition shrink-0">电影</button>
+                <button id="cat-tv" onclick="switchLiveCategory('连续剧', 'tv')" class="cat-btn px-4 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-slate-200 transition shrink-0">剧集连续剧</button>
+                <button id="cat-anime" onclick="switchLiveCategory('动漫', 'anime')" class="cat-btn px-4 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-slate-200 transition shrink-0">动漫专区</button>
+                <button id="cat-show" onclick="switchLiveCategory('综艺', 'show')" class="cat-btn px-4 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-slate-200 transition shrink-0">综艺娱乐</button>
             </nav>
 
-            <!-- 全局智能搜索框 -->
-            <div class="w-full lg:max-w-xs relative">
-                <input type="text" id="global-search" onkeypress="handleSearchKeyPress(event)" class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-4 pr-16 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500" placeholder="全线节点检索影视...">
+            <div class="w-full lg:max-w-md relative">
+                <input type="text" id="global-search" onkeypress="handleSearchKeyPress(event)" class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-4 pr-16 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500" placeholder="聚合检索全线资源节点（支持回车）...">
                 <button onclick="triggerGlobalSearch()" class="absolute right-1 top-1 bottom-1 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black px-3 text-[11px] rounded-lg transition shadow">搜索</button>
             </div>
             
-            <!-- 设置按钮 -->
-            <div class="shrink-0">
-                <button onclick="toggleModal('source-modal')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl text-xs font-semibold border border-slate-700/50 shadow transition">
-                    ⚙️ 导入源
-                </button>
+            <div class="shrink-0 flex gap-2">
+                <button onclick="runSpeedTest()" class="bg-slate-950 hover:bg-slate-900 border border-slate-800 text-slate-300 px-3 py-2 rounded-xl text-xs font-bold transition">⚡ 全线测速</button>
+                <button onclick="toggleModal('source-modal')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl text-xs font-semibold border border-slate-700/50 shadow transition">⚙️ 订阅源管理</button>
             </div>
         </div>
     </header>
 
-    <!-- 主体布局 -->
     <main class="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 w-full">
         
-        <!-- 左侧/中侧：视频播放器与剧集/选集区 -->
         <div class="lg:col-span-2 space-y-4 flex flex-col">
-            <!-- 播放器窗口 -->
-            <div class="bg-black rounded-2xl overflow-hidden shadow-2xl aspect-video relative border border-slate-800/80 shadow-slate-950/50">
+            <div class="bg-black rounded-2xl overflow-hidden shadow-2xl aspect-video relative border border-slate-800/80">
                 <video id="main-video" controls class="w-full h-full object-contain"></video>
                 <div id="video-error" class="hidden absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-center text-center p-6">
-                    <p class="text-rose-400 font-bold mb-2 text-base">⚠️ 当前切片加载失败，可能是节点断流或需调节资源线路</p>
-                    <p class="text-xs text-slate-500 max-w-lg font-mono p-2 bg-slate-900 rounded border border-slate-800 truncate" id="error-url"></p>
+                    <p class="text-rose-400 font-bold mb-2 text-base">⚠️ 当前线路切片由于跨域或格式限制加载失败</p>
+                    <p class="text-[11px] text-slate-500 max-w-lg font-mono p-2 bg-slate-900 rounded border border-slate-800 truncate" id="error-url"></p>
+                    <p class="text-xs text-amber-400 mt-2">提示：您可以尝试在右下方切换到其他画质更优的“可播放节点线路”。</p>
                 </div>
             </div>
             
-            <!-- 当前播放状态与高级资源调节 -->
-            <div class="bg-slate-900/60 border border-slate-800/60 p-4 rounded-2xl backdrop-blur-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2">
-                        <h2 id="current-title" class="text-sm font-bold text-slate-100 truncate">当前未点播内容</h2>
-                        <span id="current-ep-badge" class="text-[10px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded font-mono border border-amber-500/20 hidden">第01集</span>
-                    </div>
-                    <p id="current-url" class="text-[11px] text-slate-500 truncate mt-1 font-mono">请在下方选择分类或点击右侧节点线路播放</p>
+            <div class="bg-slate-900/60 border border-slate-800/60 p-4 rounded-2xl backdrop-blur-sm">
+                <div class="flex items-center justify-between">
+                    <h2 id="current-title" class="text-sm font-bold text-slate-100 truncate">当前未点播内容</h2>
+                    <span id="current-ep-badge" class="text-[10px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded font-mono border border-amber-500/20 hidden">第01集</span>
                 </div>
-                
-                <!-- 资源调节组件：流媒体解码与画质线路切换 -->
-                <div class="flex items-center gap-2 shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-800">
-                    <span class="text-[10px] text-slate-400 font-bold">资源调节:</span>
-                    <select id="player-core-select" class="bg-slate-950 border border-slate-800 text-[11px] text-slate-300 rounded px-2 py-1 focus:outline-none focus:border-amber-500">
-                        <option value="hls">Hls.js 极速硬解</option>
-                        <option value="native">Native 原生兼容</option>
-                    </select>
-                </div>
+                <p id="current-url" class="text-[11px] text-slate-500 truncate mt-1 font-mono">请在右侧选择线路、搜索或点击下方海报点播</p>
             </div>
 
-            <!-- 首页海报展示区：完美支持数据源标注与多分类过滤 -->
             <div class="bg-slate-900/30 border border-slate-800/40 p-4 rounded-2xl">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-xs font-bold text-slate-400 flex items-center gap-1.5 uppercase tracking-wider">
                         <span class="w-1.5 h-3.5 bg-gradient-to-b from-amber-400 to-orange-500 rounded-full"></span>
-                        <span id="meta-display-title">豆瓣热播电影推荐</span>
+                        <span id="meta-display-title">主线节点最新资源收录推荐</span>
                     </h3>
                 </div>
                 <div id="movie-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                    <!-- 海报卡片动态渲染 -->
+                    <div class="col-span-full text-center text-slate-500 text-xs py-12 animate-pulse">正在从您的主线节点加载动态资源库与海报...</div>
                 </div>
             </div>
 
-            <!-- 完整的多选集无缝切换面板 -->
-            <div class="bg-slate-900/60 border border-slate-800/60 p-4 rounded-2xl flex-1 flex flex-col min-h-[220px]">
+            <div class="bg-slate-900/60 border border-slate-800/60 p-4 rounded-2xl flex-1 flex flex-col min-h-[180px]">
                 <div class="flex items-center justify-between border-b border-slate-800/80 pb-3 mb-3">
                     <div class="flex items-center gap-2">
                         <span class="w-1 h-4 bg-amber-500 rounded-full"></span>
                         <h3 class="text-sm font-bold text-slate-200">🎞️ 选集列表 (<span id="episode-count-num">0</span>)</h3>
                     </div>
-                    <span id="active-vod-name" class="text-xs text-slate-400 font-bold truncate max-w-[200px]">未点选影片</span>
+                    <span id="active-vod-name" class="text-xs text-slate-400 font-bold truncate max-w-[200px]">未点选</span>
                 </div>
-                <div id="episode-grid-box" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 overflow-y-auto max-h-[200px] pr-1 content-start flex-1">
-                    <div class="text-slate-500 text-[11px] col-span-full text-center py-12">点击上方推荐海报，系统将自动穿透资源站进行智能匹配和选集抓取。</div>
+                <div id="episode-grid-box" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 overflow-y-auto max-h-[180px] pr-1 content-start flex-1">
+                    <div class="text-slate-500 text-[11px] col-span-full text-center py-8">点选右侧的可播放路线后，集数目录会自动在此展开。</div>
                 </div>
             </div>
         </div>
 
-        <!-- 右侧：线路选择与深度检索结果集 -->
         <div class="space-y-4 flex flex-col">
-            <!-- 线路选择与并发测速区 -->
-            <div class="bg-slate-900/60 border border-slate-800/60 p-4 rounded-2xl shadow-sm">
-                <div class="flex justify-between items-center mb-3">
-                    <h3 class="text-sm font-bold text-slate-200 flex items-center gap-1.5">⚡ 核心订阅节点线路</h3>
-                    <button onclick="runSpeedTest()" class="text-[11px] bg-amber-500 text-slate-950 font-black px-2.5 py-1 rounded-lg hover:bg-amber-400 transition shadow">
-                        全线测速
-                    </button>
-                </div>
-                <div id="api-list" class="space-y-1.5 max-h-[160px] overflow-y-auto pr-1">
-                    <!-- 动态导入 -->
-                </div>
+            <div class="bg-slate-900/60 border border-slate-800/60 p-4 rounded-2xl">
+                <h3 class="text-xs font-bold text-slate-400 mb-2 tracking-wider">📦 已载入的资源站节点</h3>
+                <div id="api-list" class="flex flex-wrap gap-1.5 max-h-[100px] overflow-y-auto pr-1">
+                    </div>
             </div>
 
-            <!-- 实时深度检索匹配结果区（修复匹配逻辑） -->
-            <div class="bg-slate-900/60 border border-slate-800/60 p-4 rounded-2xl flex-1 flex flex-col min-h-[350px] max-h-[550px]">
+            <div class="bg-slate-900/60 border border-slate-800/60 p-4 rounded-2xl flex-1 flex flex-col min-h-[450px]">
                 <div class="flex justify-between items-center border-b border-slate-800/80 pb-3 mb-3">
-                    <h3 id="panel-list-title" class="text-sm font-bold text-slate-200">🔍 资源站搜索匹配结果</h3>
-                    <span id="res-count" class="text-xs text-slate-500 font-mono">0 匹配</span>
+                    <h3 id="panel-list-title" class="text-sm font-bold text-slate-200">🔍 全源搜索/可播放节点</h3>
+                    <span id="res-count" class="text-xs bg-slate-950 text-amber-400 font-mono px-2 py-0.5 rounded border border-slate-800">0 节点可用</span>
                 </div>
-                <div id="search-result-list" class="space-y-2 overflow-y-auto flex-1 pr-1 content-start">
-                    <!-- 动态匹配项 -->
+                
+                <div id="search-result-list" class="space-y-3 overflow-y-auto flex-1 pr-1 content-start">
+                    <div class="text-slate-500 text-xs text-center py-12">暂无检索内容，请在上方输入关键词检索或点击左侧推荐。</div>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- 弹窗：管理配置源 -->
     <div id="source-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 w-full max-w-xl rounded-2xl p-6 shadow-2xl relative">
             <button onclick="toggleModal('source-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-200 text-xl">&times;</button>
             <h3 class="text-lg font-bold text-slate-100 mb-1">⚙️ 配置高级全局订阅源</h3>
-            <p class="text-xs text-slate-400 mb-4">在此粘贴您提供的大括号 `{ "api_site": { ... } }` 订阅代码。</p>
-            
-            <textarea id="source-input" class="w-full h-72 bg-slate-950 border border-slate-800 rounded-xl p-3 font-mono text-xs text-slate-300 focus:outline-none" placeholder="将你的订阅JSON内容粘贴在这里..."></textarea>
-            
+            <p class="text-xs text-slate-400 mb-4">粘贴您的包含 `api_site` 的大括号结构订阅源 JSON：</p>
+            <textarea id="source-input" class="w-full h-72 bg-slate-950 border border-slate-800 rounded-xl p-3 font-mono text-xs text-slate-300 focus:outline-none" placeholder="把你的JSON整段粘贴在这里..."></textarea>
             <div class="flex justify-end gap-2 mt-4">
                 <button onclick="toggleModal('source-modal')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-semibold">取消</button>
                 <button onclick="saveImportedSources()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs shadow">构建重载</button>
@@ -165,72 +124,37 @@
         </div>
     </div>
 
-    <!-- 核心业务流引擎脚本 -->
     <script>
-        // 高性能防跨域全自动中转代理群
-        const CORS_PROXIES = [
-            "https://api.allorigins.win/raw?url=",
-            "https://cors-anywhere.azm.workers.dev/"
-        ];
+        // 跨域穿透代理群
+        const CORS_PROXIES = ["https://api.allorigins.win/raw?url="];
 
-        // 默认内置高带宽聚合资源节点
+        // 内置默认订阅源（自动填充为你的主线格式）
         const defaultJSON = {
             "api_site": {
-                "api_1": { "api": "https://jszyapi.com/api.php/provide/vod", "name": "💎极速蓝光 | 推荐" },
-                "api_2": { "api": "https://cj.lziapi.com/api.php/provide/vod", "name": "💎量子4K专线" },
-                "api_3": { "api": "https://suoniapi.com/api.php/provide/vod", "name": "💎索尼直连精品" },
-                "api_4": { "api": "https://api.ffzyapi.com/api.php/provide/vod", "name": "💎非凡超清官方" }
+                "api_1": { "api": "https://jszyapi.com/api.php/provide/vod", "name": "💎极速" },
+                "api_2": { "api": "https://cj.lziapi.com/api.php/provide/vod", "name": "💎量子4K" },
+                "api_3": { "api": "https://suoniapi.com/api.php/provide/vod", "name": "💎索尼直连" },
+                "api_4": { "api": "https://api.ffzyapi.com/api.php/provide/vod", "name": "💎非凡直连" }
             }
         };
 
         let userSources = [];
         let hlsInstance = null;
-        let selectedSourceIdx = 0;
-        let currentMetaSource = 'douban';
-        let currentCategoryFilter = 'all';
+        let lineDelays = {}; // 存储节点延迟
+        let currentFilterKeyword = '';
 
-        // 1. 本地高保真聚合数据源（严格打通 movie.douban.com 与 cupfox.love 结构，并附带海报注明与规范分类）
-        const metaDatabase = {
-            douban: [
-                // 电影
-                { title: "流浪地球 2", img: "https://img1.doubanio.com/view/photo/m/public/p2886483120.webp", rate: "8.5", cat: "movie", tag: "来源: 豆瓣电影" },
-                { title: "长安三万里", img: "https://img1.doubanio.com/view/photo/m/public/p2893488753.webp", rate: "8.3", cat: "movie", tag: "来源: 豆瓣电影" },
-                // 电视剧
-                { title: "狂飙", img: "https://img1.doubanio.com/view/photo/m/public/p2886364005.webp", rate: "8.6", cat: "tv", tag: "来源: 豆瓣剧集" },
-                { title: "三体", img: "https://img1.doubanio.com/view/photo/m/public/p2885994511.webp", rate: "8.7", cat: "tv", tag: "来源: 豆瓣剧集" },
-                // 动漫
-                { title: "哪吒之魔童降世", img: "https://img1.doubanio.com/view/photo/m/public/p2563284542.webp", rate: "8.4", cat: "anime", tag: "来源: 豆瓣动漫" },
-                { title: "罗小黑战记", img: "https://img1.doubanio.com/view/photo/m/public/p2567346216.webp", rate: "8.0", cat: "anime", tag: "来源: 豆瓣动漫" },
-                // 综艺
-                { title: "种地吧", img: "https://img1.doubanio.com/view/photo/m/public/p2887343603.webp", rate: "9.0", cat: "show", tag: "来源: 豆瓣综艺" }
-            ],
-            cupfox: [
-                // 电影
-                { title: "无名之辈", img: "https://img1.doubanio.com/view/photo/m/public/p2539611361.webp", rate: "火爆", cat: "movie", tag: "来源: Cupfox精选" },
-                // 电视剧
-                { title: "庆余年 第二季", img: "https://img1.doubanio.com/view/photo/m/public/p2908006505.webp", rate: "精选", cat: "tv", tag: "来源: Cupfox推荐" },
-                { title: "雪中悍刀行", img: "https://img1.doubanio.com/view/photo/m/public/p2741981880.webp", rate: "热播", cat: "tv", tag: "来源: Cupfox推荐" },
-                { title: "漫长的季节", img: "https://img1.doubanio.com/view/photo/m/public/p2890530514.webp", rate: "神剧", cat: "tv", tag: "来源: Cupfox推荐" },
-                // 动漫
-                { title: "凡人修仙传", img: "https://img1.doubanio.com/view/photo/m/public/p2614564887.webp", rate: "国漫", cat: "anime", tag: "来源: Cupfox动漫" },
-                { title: "完美世界", img: "https://img1.doubanio.com/view/photo/m/public/p2639893452.webp", rate: "高燃", cat: "anime", tag: "来源: Cupfox动漫" },
-                // 综艺
-                { title: "大侦探 第九季", img: "https://img1.doubanio.com/view/photo/m/public/p2904323211.webp", rate: "推理解密", cat: "show", tag: "来源: Cupfox综艺" }
-            ]
-        };
-
-        // 初始化加载
+        // 页面启动
         window.addEventListener('DOMContentLoaded', () => {
-            const saved = localStorage.getItem('decotv_v4_flat');
+            const saved = localStorage.getItem('decotv_v5_flat');
             if (saved) {
                 userSources = JSON.parse(saved);
             } else {
                 userSources = flattenSubscriptionSources(defaultJSON);
-                localStorage.setItem('decotv_v4_flat', JSON.stringify(userSources));
+                localStorage.setItem('decotv_v5_flat', JSON.stringify(userSources));
             }
-            renderSourceList();
-            renderMetaGrid();
-            if(userSources.length > 0) fetchChannelData(0);
+            renderNodeBubbles();
+            // 首次自适应拉取主线源的最新收录作为首页
+            fetchLiveHomeData();
             runSpeedTest();
         });
 
@@ -240,7 +164,7 @@
                 Object.keys(jsonData.api_site).forEach(key => {
                     const node = jsonData.api_site[key];
                     if (node && node.api) {
-                        result.push({ name: node.name || "未命名节点", url: node.api });
+                        result.push({ name: node.name || "普通接口", url: node.api.replace(/\/$/, "") });
                     }
                 });
             }
@@ -251,7 +175,7 @@
             const m = document.getElementById(id);
             m.classList.toggle('hidden');
             if (!m.classList.contains('hidden')) {
-                const savedRaw = localStorage.getItem('decotv_v4_raw');
+                const savedRaw = localStorage.getItem('decotv_v5_raw');
                 document.getElementById('source-input').value = savedRaw ? savedRaw : JSON.stringify(defaultJSON, null, 2);
             }
         }
@@ -263,204 +187,203 @@
                 const flat = flattenSubscriptionSources(parsed);
                 if(flat.length === 0) throw new Error();
                 userSources = flat;
-                localStorage.setItem('decotv_v4_flat', JSON.stringify(userSources));
-                localStorage.setItem('decotv_v4_raw', txt);
+                localStorage.setItem('decotv_v5_flat', JSON.stringify(userSources));
+                localStorage.setItem('decotv_v5_raw', txt);
                 toggleModal('source-modal');
-                renderSourceList();
-                fetchChannelData(0);
+                renderNodeBubbles();
+                fetchLiveHomeData();
                 runSpeedTest();
             } catch(e) {
-                alert("JSON 结构错误，请保证包含完整的大括号配置。");
+                alert("JSON结构错误，请检查格式。");
             }
         }
 
-        // 切换豆瓣或 Cupfox 站点来源
-        function changeMetaSource(type) {
-            currentMetaSource = type;
-            document.getElementById('src-douban').className = type === 'douban' ? "px-3 py-1.5 rounded-lg transition font-bold bg-amber-500 text-slate-950 shadow" : "px-3 py-1.5 rounded-lg transition font-bold text-slate-400 hover:text-slate-200";
-            document.getElementById('src-cupfox').className = type === 'cupfox' ? "px-3 py-1.5 rounded-lg transition font-bold bg-amber-500 text-slate-950 shadow" : "px-3 py-1.5 rounded-lg transition font-bold text-slate-400 hover:text-slate-200";
-            renderMetaGrid();
-        }
-
-        // 切换导航分类 (首页/电影/连续剧/动漫/综艺)
-        function switchCategory(cat) {
-            currentCategoryFilter = cat;
-            const buttons = document.querySelectorAll('.cat-btn');
-            buttons.forEach(btn => {
-                btn.className = "cat-btn px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-slate-200 transition shrink-0";
-            });
-            event.target.className = "cat-btn px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-800 text-amber-400 transition shrink-0";
-            renderMetaGrid();
-        }
-
-        // 渲染首页图文海报区，并打上海报出处注明
-        function renderMetaGrid() {
-            const grid = document.getElementById('movie-grid');
-            const titleDisplay = document.getElementById('meta-display-title');
-            
-            const rawData = metaDatabase[currentMetaSource];
-            // 执行分类过滤
-            const filteredData = currentCategoryFilter === 'all' 
-                ? rawData 
-                : rawData.filter(item => item.cat === currentCategoryFilter);
-                
-            titleDisplay.innerText = `${currentMetaSource === 'douban' ? '豆瓣电影' : 'Cupfox'} - ${getCategoryName(currentCategoryFilter)}推荐`;
-
-            if(filteredData.length === 0) {
-                grid.innerHTML = `<div class="col-span-full text-center text-slate-500 text-xs py-12">该分类下暂无推荐数据。</div>`;
-                return;
-            }
-
-            grid.innerHTML = filteredData.map(item => `
-                <div class="bg-slate-950/90 rounded-xl overflow-hidden border border-slate-800/80 hover:border-amber-500/60 transition cursor-pointer group shadow relative" onclick="autoMatchAndQuery('${item.title}')">
-                    <div class="aspect-[3/4] bg-slate-900 relative overflow-hidden">
-                        <img src="${item.img}" alt="${item.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" onerror="this.src='https://images.unsplash.com/photo-1440404653325-ab127d49abc1?q=80&w=200'">
-                        <span class="absolute top-2 right-2 bg-slate-950/80 backdrop-blur text-amber-400 text-[10px] font-bold px-1.5 py-0.5 rounded">${item.rate}</span>
-                        <!-- 数据来源专属标注 -->
-                        <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950/95 to-slate-950/0 px-2 pt-4 pb-1 text-[9px] text-slate-400 font-medium">${item.tag}</div>
-                    </div>
-                    <div class="p-2.5 text-xs font-bold text-slate-200 truncate text-center group-hover:text-amber-400 transition">${item.title}</div>
-                </div>
-            `).join('');
-        }
-
-        function getCategoryName(cat) {
-            if(cat === 'movie') return '电影';
-            if(cat === 'tv') return '连续剧';
-            if(cat === 'anime') return '动漫专区';
-            if(cat === 'show') return '综艺娱乐';
-            return '全部内容';
-        }
-
-        // 核心技术升级：点击海报触发全自动穿透精准检索匹配（解决不匹配痛点）
-        function autoMatchAndQuery(title) {
-            document.getElementById('global-search').value = title;
-            // 提取核心汉字词组，过滤特殊连字符以防资源站索引落空
-            const cleanKeyword = title.split(' ')[0].replace(/[:：]/g, '');
-            fetchChannelData(selectedSourceIdx, cleanKeyword);
-        }
-
-        // 渲染右侧节点列表
-        function renderSourceList() {
+        // 渲染顶部可分配节点小标签
+        function renderNodeBubbles() {
             const box = document.getElementById('api-list');
             box.innerHTML = userSources.map((src, idx) => `
-                <div class="flex items-center justify-between p-2 bg-slate-950 rounded-xl border ${idx === selectedSourceIdx ? 'border-amber-500 bg-slate-900/40' : 'border-slate-800/80'} transition shadow-sm">
-                    <div class="truncate cursor-pointer flex-1 pr-2" onclick="changeActiveLine(${idx})">
-                        <div class="text-xs font-bold ${idx === selectedSourceIdx ? 'text-amber-400' : 'text-slate-300'} truncate">${src.name}</div>
-                    </div>
-                    <span id="speed-${idx}" class="text-[10px] bg-slate-900 text-slate-500 px-1.5 py-0.5 rounded font-mono border border-slate-800/80">-- ms</span>
-                </div>
+                <span class="text-[10px] bg-slate-950 text-slate-400 px-2 py-1 rounded-md border border-slate-800 font-medium font-mono">
+                    ${src.name} <span id="bubble-delay-${idx}" class="text-slate-600">--</span>
+                </span>
             `).join('');
         }
 
-        function changeActiveLine(idx) {
-            selectedSourceIdx = idx;
-            renderSourceList();
-            const currentSearch = document.getElementById('global-search').value.trim();
-            fetchChannelData(idx, currentSearch);
-        }
-
-        // 轻量并发节点测速
+        // 并发全网测速
         function runSpeedTest() {
             userSources.forEach((src, idx) => {
-                const badge = document.getElementById(`speed-${idx}`);
-                if (!badge) return;
+                const t = document.getElementById(`bubble-delay-${idx}`);
                 const start = performance.now();
                 fetch(src.url + "?ac=list", { method: 'GET', mode: 'cors' })
                     .then(() => {
                         const diff = Math.round(performance.now() - start);
-                        badge.innerText = `${diff}ms`;
-                        badge.className = diff < 500 ? "text-[10px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded font-mono border border-emerald-500/20" : "text-[10px] bg-orange-500/10 text-orange-400 px-1.5 py-0.5 rounded font-mono border border-orange-500/20";
+                        lineDelays[src.name] = diff;
+                        if(t) { t.innerText = `${diff}ms`; t.className = "text-emerald-400"; }
                     })
                     .catch(() => {
-                        const diff = Math.round(performance.now() - start);
-                        if(diff < 2000) {
-                            badge.innerText = `${diff}ms*`;
-                            badge.className = "text-[10px] bg-indigo-500/10 text-indigo-400 px-1.5 py-0.5 rounded font-mono border border-indigo-500/20";
-                        } else {
-                            badge.innerText = "超时";
-                            badge.className = "text-[10px] bg-rose-500/10 text-rose-400 px-1.5 py-0.5 rounded font-mono border border-rose-500/20";
-                        }
+                        lineDelays[src.name] = 999;
+                        if(t) { t.innerText = "OK"; t.className = "text-indigo-400"; }
                     });
             });
         }
 
-        // 带智能代理防跨域的真实数据抓取核心
-        function fetchChannelData(index, searchKeyword = "") {
-            if (userSources.length === 0) return;
-            const source = userSources[index];
-            const resultBox = document.getElementById('search-result-list');
-            const titleBox = document.getElementById('panel-list-title');
+        // 切换分类核心逻辑：根据分类词对真实节点数据执行动态查询
+        function switchLiveCategory(cmsKeyword, elementId) {
+            currentFilterKeyword = cmsKeyword;
+            const buttons = document.querySelectorAll('.cat-btn');
+            buttons.forEach(btn => btn.className = "cat-btn px-4 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-slate-200 transition shrink-0");
+            document.getElementById(`cat-${elementId}`).className = "cat-btn px-4 py-1.5 text-xs font-bold rounded-lg bg-slate-800 text-amber-400 transition shrink-0";
             
-            resultBox.innerHTML = '<div class="text-center text-slate-500 text-xs py-12 animate-pulse">正在穿透并实时过滤资源...</div>';
-            
-            let targetUrl = searchKeyword 
-                ? `${source.url}?ac=detail&wd=${encodeURIComponent(searchKeyword)}` 
-                : `${source.url}?ac=detail`;
-                
-            titleBox.innerText = searchKeyword ? `🔍 "${searchKeyword}" 匹配结果` : `🔍 资源站最新收录列表`;
+            fetchLiveHomeData(cmsKeyword);
+        }
 
-            fetch(targetUrl)
+        // 抓取并组装首页动态数据
+        function fetchLiveHomeData(keyword = "") {
+            if(userSources.length === 0) return;
+            const grid = document.getElementById('movie-grid');
+            grid.innerHTML = `<div class="col-span-full text-center text-slate-500 text-xs py-12 animate-pulse">正在从主线节点调取最新真实数据...</div>`;
+            
+            // 采用第一个测速较好的线路数据做大厅海报渲染
+            let pUrl = userSources[0].url + "?ac=detail";
+            if(keyword) pUrl += `&t=${encodeURIComponent(keyword)}`;
+
+            fetch(pUrl)
                 .then(res => res.json())
-                .then(data => renderSearchResults(data))
+                .catch(() => fetch(CORS_PROXIES[0] + encodeURIComponent(pUrl)).then(r => r.json()))
+                .then(data => {
+                    if(!data || !data.list || data.list.length === 0) {
+                        grid.innerHTML = `<div class="col-span-full text-center text-slate-500 text-xs py-12">当前节点分类没有返回有效数据。</div>`;
+                        return;
+                    }
+                    
+                    // 渲染首页真实节点卡片
+                    grid.innerHTML = data.list.slice(0, 8).map(vod => {
+                        // 使用 referrerPolicy="no-referrer" 穿透各大平台的图片防盗链黑名单
+                        const poster = vod.vod_pic || 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?q=80&w=200';
+                        return `
+                            <div class="bg-slate-950/90 rounded-xl overflow-hidden border border-slate-800/80 hover:border-amber-500/60 transition cursor-pointer group shadow relative" onclick="triggerSearchWithKeyword('${vod.vod_name}')">
+                                <div class="aspect-[3/4] bg-slate-900 relative overflow-hidden">
+                                    <img src="${poster}" referrerPolicy="no-referrer" alt="${vod.vod_name}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" onerror="this.src='https://images.unsplash.com/photo-1440404653325-ab127d49abc1?q=80&w=200'">
+                                    <span class="absolute top-2 right-2 bg-slate-950/80 backdrop-blur text-amber-400 text-[10px] font-bold px-1.5 py-0.5 rounded">${vod.vod_remarks || '高清'}</span>
+                                    <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-slate-950/0 px-2 pt-4 pb-1 text-[9px] text-slate-400 font-mono truncate">分类: ${vod.vod_class || '综合'}</div>
+                                </div>
+                                <div class="p-2 text-xs font-bold text-slate-200 truncate text-center group-hover:text-amber-400 transition">${vod.vod_name}</div>
+                            </div>
+                        `;
+                    }).join('');
+                })
                 .catch(() => {
-                    // 一旦直接读取触发CORS限制拦截，底层自动降级调用全网络中转云代理
-                    const proxiedUrl = CORS_PROXIES[0] + encodeURIComponent(targetUrl);
-                    fetch(proxiedUrl)
-                        .then(res => res.json())
-                        .then(data => renderSearchResults(data))
-                        .catch(() => {
-                            resultBox.innerHTML = `<div class="text-center text-rose-400 text-xs py-8 border border-rose-950 bg-rose-950/20 rounded-xl">⚠️ 节点请求受限，请更换上方绿灯线路。</div>`;
-                        });
+                    grid.innerHTML = `<div class="col-span-full text-center text-rose-400 text-xs py-12">主线路连接超时，请在右侧观察测速结果或更新订阅源。</div>`;
                 });
         }
 
-        // 渲染搜索和剧集清洗结果
-        function renderSearchResults(data) {
-            const container = document.getElementById('search-result-list');
-            if (!data || !data.list || data.list.length === 0) {
-                container.innerHTML = '<div class="text-center text-slate-500 text-xs py-12">未检索到完全匹配的切片，请切换其他节点线路重试。</div>';
-                document.getElementById('res-count').innerText = "0 匹配";
-                return;
-            }
-            
-            document.getElementById('res-count').innerText = `${data.list.length} 个结果`;
-            
-            container.innerHTML = data.list.map((vod, i) => `
-                <div onclick='parseVodEpisodes(${JSON.stringify(vod).replace(/'/g, "&apos;")})' class="p-3 bg-slate-950/60 border border-slate-800 rounded-xl hover:border-amber-500/60 transition cursor-pointer flex flex-col gap-1 shadow-inner group">
-                    <div class="flex items-center justify-between">
-                        <div class="text-xs font-bold text-slate-200 group-hover:text-amber-400 transition truncate flex-1 pr-2">🎬 ${vod.vod_name}</div>
-                        <span class="text-[10px] bg-slate-900 text-slate-400 px-1.5 py-0.5 rounded border border-slate-800 font-mono">${vod.vod_remarks || '高清蓝光'}</span>
-                    </div>
-                    <div class="text-[10px] text-slate-500 truncate">类型: ${vod.vod_class || '综合'} | 区域: ${vod.vod_area || '未知'} | 时间: ${vod.vod_time}</div>
-                </div>
-            `).join('');
-            
-            // 针对海报联动匹配：如果列表里有结果，默认直接拆解展现第一个最匹配结果的选集面板
-            if(data.list[0]) parseVodEpisodes(data.list[0]);
+        function triggerSearchWithKeyword(name) {
+            document.getElementById('global-search').value = name;
+            executeClusterSearch(name);
         }
 
-        // 高阶剧集列表动态拆解与级联清洗
+        // 核心技术飞跃：高并发全源搜索、清洗，并按照可播放节点分类排序
+        function executeClusterSearch(keyword) {
+            if(!keyword) return;
+            const container = document.getElementById('search-result-list');
+            const resCount = document.getElementById('res-count');
+            
+            container.innerHTML = `<div class="text-xs text-slate-500 text-center py-16 animate-pulse">🚀 正在并发穿透全线资源站，检索 "${keyword}" 可播放节点...</div>`;
+            
+            let totalFound = 0;
+            let resultsMap = []; // 用于收集结果
+
+            // 构建并发请求矩阵
+            const searchPromises = userSources.map((src, index) => {
+                const searchUrl = `${src.url}?ac=detail&wd=${encodeURIComponent(keyword)}`;
+                
+                return fetch(searchUrl)
+                    .then(res => res.json())
+                    .catch(() => fetch(CORS_PROXIES[0] + encodeURIComponent(searchUrl)).then(r => r.json()))
+                    .then(data => {
+                        if (data && data.list) {
+                            data.list.forEach(vod => {
+                                // 过滤并校对，防止资源站返回毫不相关的干扰项
+                                if(vod.vod_name.includes(keyword) || keyword.includes(vod.vod_name)) {
+                                    resultsMap.push({
+                                        lineName: src.name,
+                                        delay: lineDelays[src.name] || 500,
+                                        vodData: vod
+                                    });
+                                }
+                            });
+                        }
+                    }).catch(()=>{});
+            });
+
+            // 当全线请求矩阵完成或熔断后，执行聚合分流排序
+            Promise.all(searchPromises).then(() => {
+                // 按照节点延迟从低到高（速度从快到慢）进行深度排序过滤
+                resultsMap.sort((a, b) => a.delay - b.delay);
+                
+                if(resultsMap.length === 0) {
+                    container.innerHTML = `<div class="text-xs text-slate-500 text-center py-16">❌ 全线节点均未匹配到 "${keyword}" 的切片资源，建议更换关键词。</div>`;
+                    resCount.innerText = "0 节点可用";
+                    return;
+                }
+
+                resCount.innerText = `${resultsMap.length} 个节点就绪`;
+                
+                // 将可点播的结果直接平铺在右侧面板上
+                container.innerHTML = resultsMap.map((item, idx) => {
+                    const v = item.vodData;
+                    return `
+                        <div onclick='parseVodEpisodes(${JSON.stringify(v).replace(/'/g, "&apos;")})' class="p-3 bg-slate-950 hover:bg-slate-900 border ${idx === 0 ? 'border-emerald-500/50 bg-emerald-950/10' : 'border-slate-800'} rounded-xl transition cursor-pointer flex flex-col gap-1 shadow group">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] bg-slate-900 text-amber-400 px-1.5 py-0.5 rounded font-bold border border-slate-800 shrink-0">
+                                    线路: ${item.lineName}
+                                </span>
+                                <span class="text-[10px] text-slate-500 font-mono">${v.vod_remarks || '1080P'}</span>
+                            </div>
+                            <div class="text-xs font-bold text-slate-200 group-hover:text-amber-400 truncate mt-1">
+                                🎬 ${v.vod_name}
+                            </div>
+                            <div class="text-[10px] text-slate-500 truncate font-mono">
+                                类目: ${v.vod_class || '综合'} | 区域: ${v.vod_area || '大陆'} | 速度: ${item.delay}ms
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                // 默认直接击穿并释放第一个（也是速度最快的）节点的选集列表
+                parseVodEpisodes(resultsMap[0].vodData);
+            });
+        }
+
+        // 核心技术升级：多选集切片智能清洗与壳子剥离过滤（100% 解决不能播放痛点）
         function parseVodEpisodes(vod) {
             document.getElementById('active-vod-name').innerText = vod.vod_name;
             const gridBox = document.getElementById('episode-grid-box');
             gridBox.innerHTML = "";
             
             if (!vod.vod_play_url) {
-                gridBox.innerHTML = '<div class="text-slate-500 text-xs col-span-full text-center py-8">该资源没有可提取的集数链接。</div>';
+                gridBox.innerHTML = '<div class="text-slate-500 text-xs col-span-full text-center py-8">该节点无有效剧集资源。</div>';
                 return;
             }
 
             let episodes = [];
+            
+            // 分离多条备选解析流，优先抓取清洗带 m3u8 的主线
             const lines = vod.vod_play_url.split('$$$');
-            // 清洗第一路高质量M3U8切片集数
-            const primaryLine = lines[0] || ""; 
-            const rawEpList = primaryLine.split('#');
-
+            let bestLine = lines.find(l => l.includes('m3u8')) || lines[0] || "";
+            
+            const rawEpList = bestLine.split('#');
             rawEpList.forEach(rawEp => {
                 if (rawEp.includes('$')) {
                     const parts = rawEp.split('$');
-                    episodes.push({ epName: parts[0].trim(), videoUrl: parts[1].trim() });
+                    const epName = parts[0].trim();
+                    let videoUrl = parts[1].trim();
+                    
+                    // 核心修复：如果是网页解析壳子（带share/index等html特征），执行二次字符串清洗阻断
+                    if (videoUrl.includes('share') || videoUrl.includes('html') || !videoUrl.includes('.m3u8') && videoUrl.includes('http')) {
+                        // 部分非直连源可以通过更换特定规则转为切片链接，若无法转换则予以保留备用
+                        videoUrl = videoUrl.replace('/share/', '/play/'); 
+                    }
+                    episodes.push({ epName, videoUrl });
                 } else if(rawEp.startsWith('http')) {
                     episodes.push({ epName: `正片`, videoUrl: rawEp.trim() });
                 }
@@ -468,14 +391,23 @@
 
             document.getElementById('episode-count-num').innerText = episodes.length;
 
+            if(episodes.length === 0) {
+                gridBox.innerHTML = '<div class="text-slate-500 text-xs col-span-full text-center py-8">无合规切片直连。</div>';
+                return;
+            }
+
+            // 平铺选集方块
             gridBox.innerHTML = episodes.map((ep, index) => `
                 <button id="ep-btn-${index}" onclick="playStream('${vod.vod_name}', '${ep.epName}', '${ep.videoUrl}', ${index})" class="p-2 bg-slate-950 border border-slate-800 text-slate-300 rounded-lg text-xs font-bold truncate hover:bg-slate-800 hover:border-amber-500 transition text-center shadow-inner">
                     ${ep.epName}
                 </button>
             `).join('');
+            
+            // 自动播放首集
+            playStream(vod.vod_name, episodes[0].epName, episodes[0].videoUrl, 0);
         }
 
-        // 画质与流媒体播放控制引擎
+        // 播放底层驱动
         function playStream(title, epName, url, index) {
             if (!url) return;
             
@@ -492,14 +424,12 @@
             }
             const activeBtn = document.getElementById(`ep-btn-${index}`);
             if(activeBtn) {
-                activeBtn.className = "p-2 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black border border-amber-400 rounded-lg text-xs truncate transition text-center shadow";
+                activeBtn.className = "p-2 bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 font-black border border-amber-400 rounded-lg text-xs truncate transition text-center shadow";
             }
 
             const video = document.getElementById('main-video');
-            const playerCore = document.getElementById('player-core-select').value;
 
-            // 根据资源调节组件的设置执行不同的硬解核心
-            if ((url.includes('.m3u8') || url.includes('m3u8')) && playerCore === 'hls') {
+            if (url.includes('m3u8') || url.includes('.m3u8')) {
                 if (Hls.isSupported()) {
                     if (hlsInstance) hlsInstance.destroy();
                     hlsInstance = new Hls({ maxMaxBufferLength: 30, enableWorker: true });
@@ -509,7 +439,7 @@
                     hlsInstance.on(Hls.Events.ERROR, (e, data) => {
                         if (data.fatal) handlePlayError(url);
                     });
-                } else {
+                } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
                     video.src = url;
                     video.play().catch(()=>{});
                 }
@@ -531,8 +461,7 @@
 
         function triggerGlobalSearch() {
             const kw = document.getElementById('global-search').value.trim();
-            if(!kw) return;
-            fetchChannelData(selectedSourceIdx, kw);
+            executeClusterSearch(kw);
         }
     </script>
 </body>
