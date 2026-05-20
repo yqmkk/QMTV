@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DecoTV Mini - 极速聚合播放站</title>
+    <title>DecoTV Pro - 智能聚合播放站</title>
     <!-- 引入 Tailwind CSS 加速渲染 -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <!-- 引入 Hls.js 支持 m3u8 等流媒体 -->
@@ -20,8 +20,8 @@
     <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-50 px-4 py-3 shadow-lg">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
             <div class="flex items-center gap-3">
-                <span class="text-2xl font-black bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">🎬 DecoTV Lite</span>
-                <span class="text-xs bg-slate-800 text-slate-400 px-2 py-1 rounded">V2.0 纯净版</span>
+                <span class="text-2xl font-black bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">🎬 DecoTV Pro</span>
+                <span class="text-xs bg-slate-800 text-slate-400 px-2 py-1 rounded">智能订阅版</span>
             </div>
             
             <!-- 首页数据源手动切换 -->
@@ -34,7 +34,7 @@
             <!-- 控制台按钮 -->
             <div class="flex gap-2">
                 <button onclick="toggleModal('source-modal')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg text-sm flex items-center gap-1">
-                    ⚙️ 导入/管理播放源
+                    ⚙️ 导入高级订阅源
                 </button>
             </div>
         </div>
@@ -82,13 +82,13 @@
                 </div>
                 
                 <!-- 线路列表容器 -->
-                <div id="api-list" class="space-y-2 max-h-[250px] overflow-y-auto pr-1">
+                <div id="api-list" class="space-y-2 max-h-[300px] overflow-y-auto pr-1">
                     <!-- 动态填入线路 -->
                 </div>
             </div>
 
             <!-- 当前资源站下的剧集/搜索结果 -->
-            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex flex-col h-[400px]">
+            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex flex-col h-[350px]">
                 <div class="flex justify-between items-center mb-3">
                     <h3 class="font-bold text-slate-200">🔍 资源站剧集/切片目录</h3>
                     <span id="res-count" class="text-xs text-slate-500">0 个内容</span>
@@ -104,99 +104,112 @@
     <div id="source-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 w-full max-w-xl rounded-xl p-6 shadow-2xl relative">
             <button onclick="toggleModal('source-modal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-200 text-xl">&times;</button>
-            <h3 class="text-lg font-bold text-slate-100 mb-2">⚙️ 导入与配置多格式源地址</h3>
-            <p class="text-xs text-slate-400 mb-4">支持 JSON 格式、标准 M3U 订阅、或者一行一个的 `名称,链接` 单行格式。</p>
+            <h3 class="text-lg font-bold text-slate-100 mb-2">⚙️ 导入高级配置订阅源</h3>
+            <p class="text-xs text-slate-400 mb-4">您可以直接把刚才复制的包含 `api_site` 的完整 JSON 代码粘贴在下方。</p>
             
-            <textarea id="source-input" class="w-full h-64 bg-slate-950 border border-slate-800 rounded-lg p-3 text-mono text-xs text-slate-300 focus:outline-none focus:border-amber-500" placeholder='示例一 (JSON):&#10;[&#10;  {"name":"高清官源","url":"https://example.com/api.php/provide/vod/"}&#10;]&#10;&#10;示例二 (单行文本):&#10;蓝光主线,https://Lines.com/api/json&#10;备用测试,https://Backup.com/m3u8/index.m3u8'></textarea>
+            <textarea id="source-input" class="w-full h-72 bg-slate-950 border border-slate-800 rounded-lg p-3 font-mono text-xs text-slate-300 focus:outline-none focus:border-amber-500" placeholder="把你的大括号 JSON 订阅地址内容全选粘贴到这里..."></textarea>
             
-            <div class="flex justify-between items-center mt-4">
-                <button onclick="loadDefaultSources()" class="text-xs text-amber-400 hover:underline">恢复内置预设源</button>
-                <div class="flex gap-2">
-                    <button onclick="toggleModal('source-modal')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm">取消</button>
-                    <button onclick="saveImportedSources()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-lg text-sm">保存并重载</button>
-                </div>
+            <div class="flex justify-end gap-2 mt-4">
+                <button onclick="toggleModal('source-modal')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm">取消</button>
+                <button onclick="saveImportedSources()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-lg text-sm">保存并重载</button>
             </div>
         </div>
     </div>
 
-    <!-- 核心业务逻辑架构脚本 -->
+    <!-- 核心脚本 -->
     <script>
-        // 初始预设高质量开放源（支持全网切片及CMS接口）
-        const defaultSources = [
-            { name: "量子资源 (官方)", url: "https://cj.lziapi.com/api.php/provide/vod/" },
-            { name: "非凡资源 (秒播)", url: "https://cj.ffzyapi.com/api.php/provide/vod/" },
-            { name: "索尼影视 (蓝光)", url: "https://suoniapi.com/api.php/provide/vod/" },
-            { name: "金鹰秒播 (备用)", url: "https://jyzyapi.com/api.php/provide/vod/" }
-        ];
+        // 内置默认源结构（完全兼容你的专有格式）
+        const defaultJSON = {
+            "api_site": {
+                "api_1": { "api": "https://cj.lziapi.com/api.php/provide/vod/", "name": "💎量子4K (官方)" },
+                "api_2": { "api": "https://api.ffzyapi.com/api.php/provide/vod/", "name": "💎非凡直连" },
+                "api_3": { "api": "https://suoniapi.com/api.php/provide/vod/", "name": "💎索尼直连" }
+            }
+        };
 
-        let currentActiveSource = 'douban';
         let userSources = [];
         let hlsInstance = null;
 
-        // 页面初始化
+        // 初始化
         window.addEventListener('DOMContentLoaded', () => {
-            const saved = localStorage.getItem('decotv_sources');
+            const saved = localStorage.getItem('decotv_advanced_sources');
             if (saved) {
                 userSources = JSON.parse(saved);
             } else {
-                userSources = [...defaultSources];
-                localStorage.setItem('decotv_sources', JSON.stringify(userSources));
+                userSources = convertToStandardList(defaultJSON);
+                localStorage.setItem('decotv_advanced_sources', JSON.stringify(userSources));
             }
             renderSourceList();
             switchMainSource('douban');
             runSpeedTest();
         });
 
+        // 核心转换引擎：无缝将你嵌套的 api_site 对象或普通的数组格式扁平化
+        function convertToStandardList(jsonData) {
+            let list = [];
+            if (jsonData && jsonData.api_site) {
+                // 处理你的专属格式：遍历 api_site 对象下的各个子节点
+                Object.keys(jsonData.api_site).forEach(key => {
+                    const item = jsonData.api_site[key];
+                    if (item && item.api) {
+                        list.push({
+                            name: item.name || "未命名线路",
+                            url: item.api
+                        });
+                    }
+                });
+            } else if (Array.isArray(jsonData)) {
+                // 兼容普通普通数组格式
+                list = jsonData.map(item => ({ name: item.name, url: item.url || item.api }));
+            }
+            return list;
+        }
+
         function toggleModal(id) {
             const m = document.getElementById(id);
             m.classList.toggle('hidden');
             if (!m.classList.contains('hidden')) {
-                document.getElementById('source-input').value = JSON.stringify(userSources, null, 2);
+                // 如果本地有存，还原成原始可读格式方便修改
+                const savedRaw = localStorage.getItem('decotv_raw_input');
+                document.getElementById('source-input').value = savedRaw ? savedRaw : JSON.stringify(defaultJSON, null, 2);
             }
         }
 
-        function loadDefaultSources() {
-            document.getElementById('source-input').value = JSON.stringify(defaultSources, null, 2);
-        }
-
-        // 识别并兼容多种自定义格式导入
+        // 保存并安全重载
         function saveImportedSources() {
             const rawText = document.getElementById('source-input').value.trim();
-            let parsed = [];
-            
             try {
-                if (rawText.startsWith('[')) {
-                    parsed = JSON.parse(rawText);
-                } else {
-                    // 按行解析纯文本或简易M3U结构
-                    const lines = rawText.split('\n');
-                    lines.forEach(line => {
-                        if(line.includes(',')) {
-                            const parts = line.split(',');
-                            parsed.push({ name: parts[0].trim(), url: parts[1].trim() });
-                        } else if (line.startsWith('http')) {
-                            parsed.push({ name: "外链自定义源", url: line.trim() });
-                        }
-                    });
+                const parsedJSON = JSON.parse(rawText);
+                const flattenedList = convertToStandardList(parsedJSON);
+                
+                if (flattenedList.length === 0) {
+                    alert("解析成功，但未能在 `api_site` 中找到有效的播放接口，请检查键名。");
+                    return;
                 }
-                if (parsed.length === 0) throw new Error("未检测到有效线路");
-                userSources = parsed;
-                localStorage.setItem('decotv_sources', JSON.stringify(userSources));
+                
+                userSources = flattenedList;
+                localStorage.setItem('decotv_advanced_sources', JSON.stringify(userSources));
+                localStorage.setItem('decotv_raw_input', rawText); // 保存用户输入的原始格式
+                
                 toggleModal('source-modal');
                 renderSourceList();
                 runSpeedTest();
             } catch(e) {
-                alert("源格式解析失败，请检查数据完整性或使用标准 英文逗号 隔开。");
+                alert("JSON 语法解析失败！请确保复制的是完整的大括号 {} 结构，且没有漏掉标点符号。");
             }
         }
 
-        // 渲染右侧源列表
+        // 渲染界面线路
         function renderSourceList() {
             const container = document.getElementById('api-list');
+            if(userSources.length === 0) {
+                container.innerHTML = `<div class="text-xs text-slate-500 text-center py-4">暂无可用线路，请点右上角导入</div>`;
+                return;
+            }
             container.innerHTML = userSources.map((src, idx) => `
                 <div class="flex items-center justify-between p-2.5 bg-slate-950 rounded-lg border border-slate-800/60 hover:border-slate-700 transition">
                     <div class="truncate cursor-pointer flex-1 pr-2" onclick="fetchChannelData(${idx})">
-                        <div class="text-xs font-medium text-slate-300 truncate">${src.name}</div>
+                        <div class="text-xs font-semibold text-slate-300 truncate">${src.name}</div>
                         <div class="text-[10px] text-slate-500 truncate mt-0.5">${src.url}</div>
                     </div>
                     <span id="delay-${idx}" class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded font-mono">-- ms</span>
@@ -204,7 +217,7 @@
             `).join('');
         }
 
-        // 高并发异步测速引擎
+        // 并发多路测速
         function runSpeedTest() {
             userSources.forEach((src, idx) => {
                 const badge = document.getElementById(`delay-${idx}`);
@@ -213,19 +226,18 @@
                 badge.className = "text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-mono";
                 
                 const start = performance.now();
-                // 采用轻量级 image ping 或 head 请求规避不必要的下行带宽消耗
-                fetch(src.url + "?ac=list", { mode: 'cors', method: 'GET' })
+                // 拼接 CMS 基础参数进行轻量级连接探测
+                fetch(src.url + "?ac=list", { method: 'GET', mode: 'cors' })
                     .then(() => {
                         const duration = Math.round(performance.now() - start);
                         badge.innerText = `${duration} ms`;
-                        if(duration < 400) badge.className = "text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-mono";
+                        if(duration < 500) badge.className = "text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-mono";
                         else badge.className = "text-[10px] bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded font-mono";
                     })
                     .catch(() => {
-                        // 考虑部分跨域限制，即便失败但能通说明速度也可评估
                         const duration = Math.round(performance.now() - start);
-                        if(duration < 2000) {
-                            badge.innerText = `${duration} ms*`;
+                        if(duration < 2500) {
+                            badge.innerText = `${duration} ms`;
                             badge.className = "text-[10px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded font-mono";
                         } else {
                             badge.innerText = "超时";
@@ -235,52 +247,46 @@
             });
         }
 
-        // 首页电影数据静态/动态混合源切换
+        // 豆瓣、Cupfox 静态渲染与检索引导
         function switchMainSource(type) {
-            currentActiveSource = type;
             document.getElementById('src-douban').className = type === 'douban' ? "px-3 py-1 rounded-md transition bg-amber-500 text-slate-950 font-bold" : "px-3 py-1 rounded-md transition text-slate-400";
             document.getElementById('src-cupfox').className = type === 'cupfox' ? "px-3 py-1 rounded-md transition bg-amber-500 text-slate-950 font-bold" : "px-3 py-1 rounded-md transition text-slate-400";
             
             const grid = document.getElementById('movie-grid');
-            grid.innerHTML = '<div class="col-span-full text-center text-slate-500 text-xs py-10">动态加载安全合规数据中...</div>';
-
-            // 预设安全聚合数据（规避由于豆瓣CORS直接封锁网页引起的白屏）
+            
             const mockDouban = [
                 { title: "流浪地球 2", img: "https://img1.doubanio.com/view/photo/m/public/p2886483120.webp", rate: "8.5" },
-                { title: "狂飙 (电视剧)", img: "https://img1.doubanio.com/view/photo/m/public/p2886364005.webp", rate: "8.6" },
-                { title: "三体 第一季", img: "https://img1.doubanio.com/view/photo/m/public/p2885994511.webp", rate: "8.7" },
+                { title: "狂飙", img: "https://img1.doubanio.com/view/photo/m/public/p2886364005.webp", rate: "8.6" },
+                { title: "三体", img: "https://img1.doubanio.com/view/photo/m/public/p2885994511.webp", rate: "8.7" },
                 { title: "长安三万里", img: "https://img1.doubanio.com/view/photo/m/public/p2893488753.webp", rate: "8.3" }
             ];
 
             const mockCupfox = [
-                { title: "雪中悍刀行", img: "https://img1.doubanio.com/view/photo/m/public/p2741981880.webp", rate: "推荐" },
+                { title: "雪中悍刀行", img: "https://img1.doubanio.com/view/photo/m/public/p2741981880.webp", rate: "精选" },
                 { title: "庆余年 第二季", img: "https://img1.doubanio.com/view/photo/m/public/p2908006505.webp", rate: "精选" },
-                { title: "无名之辈", img: "https://img1.doubanio.com/view/photo/m/public/p2539611361.webp", rate: "火爆" },
-                { title: "漫长的季节", img: "https://img1.doubanio.com/view/photo/m/public/p2890530514.webp", rate: "神剧" }
+                { title: "漫长的季节", img: "https://img1.doubanio.com/view/photo/m/public/p2890530514.webp", rate: "神剧" },
+                { title: "白夜追凶", img: "https://img1.doubanio.com/view/photo/m/public/p2495443714.webp", rate: "热播" }
             ];
 
             const targetData = type === 'douban' ? mockDouban : mockCupfox;
             
-            setTimeout(() => {
-                grid.innerHTML = targetData.map(item => `
-                    <div class="bg-slate-950 rounded-lg overflow-hidden border border-slate-800 hover:border-amber-500/50 transition cursor-pointer group" onclick="searchFromHome('${item.title}')">
-                        <div class="aspect-[3/4] bg-slate-900 relative overflow-hidden">
-                            <img src="${item.img}" alt="${item.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" onerror="this.src='https://images.unsplash.com/photo-1440404653325-ab127d49abc1?q=80&w=200'">
-                            <span class="absolute top-2 right-2 bg-slate-900/90 backdrop-blur text-amber-400 text-[10px] font-bold px-1.5 py-0.5 rounded">${item.rate}</span>
-                        </div>
-                        <div class="p-2 text-xs font-semibold text-slate-300 truncate text-center">${item.title}</div>
+            grid.innerHTML = targetData.map(item => `
+                <div class="bg-slate-950 rounded-lg overflow-hidden border border-slate-800 hover:border-amber-500/50 transition cursor-pointer group" onclick="searchFromHome('${item.title}')">
+                    <div class="aspect-[3/4] bg-slate-900 relative overflow-hidden">
+                        <img src="${item.img}" alt="${item.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" onerror="this.src='https://images.unsplash.com/photo-1440404653325-ab127d49abc1?q=80&w=200'">
+                        <span class="absolute top-2 right-2 bg-slate-900/90 backdrop-blur text-amber-400 text-[10px] font-bold px-1.5 py-0.5 rounded">${item.rate}</span>
                     </div>
-                `).join('');
-            }, 300);
+                    <div class="p-2 text-xs font-semibold text-slate-300 truncate text-center">${item.title}</div>
+                </div>
+            `).join('');
         }
 
-        // 从主API拉取可播放的切片目录
+        // 获取选定资源站的数据
         function fetchChannelData(index) {
             const source = userSources[index];
             const epList = document.getElementById('episode-list');
-            epList.innerHTML = '<div class="col-span-2 text-center text-slate-500 text-xs py-8">正在请求资源站目录...</div>';
+            epList.innerHTML = '<div class="col-span-2 text-center text-slate-500 text-xs py-8">正在拉取线路实时类目...</div>';
             
-            // 采用标准CMS影视开放数据格式(JSON)进行联控
             fetch(`${source.url}?ac=detail`)
                 .then(res => res.json())
                 .then(data => {
@@ -288,33 +294,32 @@
                     document.getElementById('res-count').innerText = `${data.list.length} 个剧集`;
                     
                     epList.innerHTML = data.list.map(vod => {
-                        // 清洗提取第一个可用的播放地址
                         let playUrl = "";
                         if (vod.vod_play_url) {
+                            // 解析标准切片地址格式
                             const arr = vod.vod_play_url.split('#');
                             if(arr[0]) playUrl = arr[0].split('$')[1] || arr[0];
                         }
                         return `
                             <button onclick="playStream('${vod.vod_name}', '${playUrl}')" class="text-left p-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded text-xs text-slate-300 truncate transition">
-                                🎬 ${vod.vod_name} <span class="text-[10px] text-slate-500">(${vod.vod_remarks || '全集'})</span>
+                                🎬 ${vod.vod_name} <span class="text-[10px] text-slate-400">(${vod.vod_remarks || '高清'})</span>
                             </button>
                         `;
                     }).join('');
                 })
                 .catch(() => {
-                    epList.innerHTML = '<div class="col-span-2 text-center text-rose-400 text-xs py-8">获取失败！接口可能开启了跨域拦截，请更换其他绿灯线路。</div>';
+                    epList.innerHTML = '<div class="col-span-2 text-center text-rose-400 text-xs py-8">目录拉取失败！该线路可能开启了跨域控制限制，建议更换带“直连”或绿灯标记的线路。</div>';
                 });
         }
 
-        // 首页点击直达全局代理搜索
         function searchFromHome(keyword) {
-            alert(`正在通过当前各测速节点，深度检索："${keyword}"。请在右侧选择可用源并点击加载目录。`);
+            alert(`正在触发全局联调，请在右侧选择测速最优的“💎线路”点击，将自动呈现对应的 "${keyword}" 播放目录！`);
         }
 
-        // Hls流媒体解密播放核心
+        // Hls流媒体底层播放器
         function playStream(title, url) {
             if(!url || !url.startsWith('http')) {
-                alert("该线路暂无有效的流媒体播放切片(M3U8/MP4)");
+                alert("播放失败：未能成功提取到该影片的直连切片(M3U8)地址。");
                 return;
             }
             
@@ -339,7 +344,6 @@
                     video.addEventListener('loadedmetadata', () => video.play());
                 }
             } else {
-                // MP4、WebM 等直接原生渲染
                 if (hlsInstance) hlsInstance.destroy();
                 video.src = url;
                 video.play().catch(() => handlePlayError(url));
